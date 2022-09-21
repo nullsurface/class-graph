@@ -10,6 +10,8 @@ struct Color {
 struct Node {
     radius: i32,
     color: Color,
+    x: u32;
+    y: u32;
 }
 
 fn main() {
