@@ -3,27 +3,50 @@ extern crate glium;
 
 use glium::{glutin, Surface};
 
+#[derive(Copy, Clone)]
 struct Vertex {
-    position: [f32; 3]
+    position: [f32; 2],
 }
+implement_vertex!(Vertex, position);
 
 fn main() {
+    // Setup objects for GUI   
     let mut event_loop = glutin::event_loop::EventLoop::new();
     let window_builder = glutin::window::WindowBuilder::new();
     let context_builder = glutin::ContextBuilder::new();
     let display = glium::Display::new(window_builder, context_builder, &event_loop).unwrap();
+    
+    let vertex_shader_src = r#"
+        #version 140
+        in vec2 position;
+        void main() {
+            gl_Position = vec4(position, 0.0, 1.0);
+        }
+    "#;
 
+    let fragment_shader_src = r#"
+        #version 140
+        out vec4 color;
+        void main() {
+            color = vec4(1.0, 0.0, 0.0, 1.0);
+        }
+    "#;
+ 
     // Vertex's for a simple triangle
-    let vert1 = Vertex { position: [-0.5, -0.5];
-    let vert2 = Vertex { position: [0.0, 0.5];
-    let vert3 = Vertex { position: [0.5, -0.25];
+    let vert1 = Vertex { position: [-0.5, -0.5]};
+    let vert2 = Vertex { position: [0.0, 0.5]};
+    let vert3 = Vertex { position: [0.5, -0.25]};
     let shape = vec![vert1, vert2, vert3];
-    
-    
+    let vertex_buffer = glium::VertexBuffer::new(&display, &shape).unwrap();
+    let indices = glium::index::NoIndices(glium::index::PrimitiveType::TrianglesList);
+    let program = glium::Program::from_source(&display, vertex_shader_src, fragment_shader_src, None).unwrap();
+
     // Main Loop for GUI Window
     event_loop.run(move |ev, _, control_flow| {
         let mut frame = display.draw();
         frame.clear_color(0.0, 0.0, 1.0, 1.0);
+        frame.draw(&vertex_buffer, &indices, &program, &glium::uniforms::EmptyUniforms,
+            &Default::default()).unwrap(); 
         frame.finish().unwrap();
 
         let next_frame_time = std::time::Instant::now() +
