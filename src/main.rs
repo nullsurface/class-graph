@@ -11,16 +11,22 @@ implement_vertex!(Vertex, position);
 
 fn main() {
     // Setup objects for GUI   
-    let mut event_loop = glutin::event_loop::EventLoop::new();
+    let event_loop = glutin::event_loop::EventLoop::new();
     let window_builder = glutin::window::WindowBuilder::new();
     let context_builder = glutin::ContextBuilder::new();
     let display = glium::Display::new(window_builder, context_builder, &event_loop).unwrap();
     
     let vertex_shader_src = r#"
         #version 140
+
         in vec2 position;
+
+        uniform float count;
+
         void main() {
-            gl_Position = vec4(position, 0.0, 1.0);
+            vec2 pos = position;
+            pos.x += count;
+            gl_Position = vec4(pos, 0.0, 1.0);
         }
     "#;
 
@@ -33,16 +39,16 @@ fn main() {
     "#;
  
     // Vertex's for a simple triangle
-    let mut vert1 = Vertex { position: [-0.5, -0.5]};
-    let mut vert2 = Vertex { position: [0.0, 0.5]};
-    let mut vert3 = Vertex { position: [0.5, -0.25]};
-    let mut vert4 = Vertex { position: [0.5, 0.25]};
-    let mut shape = vec![vert1, vert2, vert3, vert4];
-    let mut vertex_buffer = glium::VertexBuffer::new(&display, &shape).unwrap();
+    let vert1 = Vertex { position: [-0.5, -0.5]};
+    let vert2 = Vertex { position: [0.0, 0.5]};
+    let vert3 = Vertex { position: [0.5, -0.25]};
+    let vert4 = Vertex { position: [0.5, 0.25]};
+    let shape = vec![vert1, vert2, vert3, vert4];
+    let vertex_buffer = glium::VertexBuffer::new(&display, &shape).unwrap();
     let indices = glium::index::NoIndices(glium::index::PrimitiveType::TrianglesList);
     let program = glium::Program::from_source(&display, vertex_shader_src, fragment_shader_src, None).unwrap();
 
-    let mut count = -0.5;
+    let mut count: f32 = -0.5;
         
     // Main Loop for GUI Window
     event_loop.run(move |ev, _, control_flow| {
@@ -63,21 +69,13 @@ fn main() {
         *control_flow = glutin::event_loop::ControlFlow::WaitUntil(next_frame_time);
         
         count += 0.0002;
-        if (count > 0.5) {
+        if count > 0.5 {
             count = -0.5;
         }
 
-        vert1 = Vertex { position: [count + -0.5, -0.5]};
-        vert2 = Vertex { position: [count + 0.0, 0.5]};
-        vert3 = Vertex { position: [count + 0.5, -0.25]};
-        vert4 = Vertex { position: [count + 0.5, 0.25]};
-
-        shape = vec![vert1, vert2, vert3, vert4];
-        vertex_buffer = glium::VertexBuffer::new(&display, &shape).unwrap();
-
         let mut frame = display.draw();
         frame.clear_color(0.0, 0.0, 1.0, 1.0);
-        frame.draw(&vertex_buffer, &indices, &program, &glium::uniforms::EmptyUniforms,
+        frame.draw(&vertex_buffer, &indices, &program, &uniform! {count:count},
             &Default::default()).unwrap(); 
         frame.finish().unwrap();
     });
