@@ -20,21 +20,22 @@ fn main() {
         #version 140
 
         in vec2 position;
-
-        uniform float count;
-
+        out vec2 attr;
+        uniform mat4 matrix;
+        
         void main() {
-            vec2 pos = position;
-            pos.x += count;
-            gl_Position = vec4(pos, 0.0, 1.0);
+            attr = position;
+            gl_Position = matrix * vec4(position, 0.0, 1.0);
         }
     "#;
 
     let fragment_shader_src = r#"
         #version 140
         out vec4 color;
+        in vec2 attr;
+
         void main() {
-            color = vec4(1.0, 0.0, 0.0, 1.0);
+            color = vec4(attr, 0.0, 1.0);
         }
     "#;
  
@@ -72,10 +73,19 @@ fn main() {
         if count > 0.5 {
             count = -0.5;
         }
-
+        
+        let uniforms = uniform! {
+            matrix: [
+                [1.0, 0.0, 0.0, 0.0],
+                [0.0, 1.0, 0.0, 0.0],
+                [0.0, 0.0, 1.0, 0.0],
+                [count, 0.0, 0.0, 1.0f32],
+            ]
+        };
+ 
         let mut frame = display.draw();
         frame.clear_color(0.0, 0.0, 1.0, 1.0);
-        frame.draw(&vertex_buffer, &indices, &program, &uniform! {count:count},
+        frame.draw(&vertex_buffer, &indices, &program, &uniforms,
             &Default::default()).unwrap(); 
         frame.finish().unwrap();
     });
